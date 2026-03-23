@@ -182,7 +182,7 @@
                         </td>
                     </tr>
                     <!-- Row 4 -->
-                    <tr class="hover:bg-gray-50 transition-colors page-break-row" style="page-break-after: always;">
+                    <tr class="hover:bg-gray-50 transition-colors">
                         <td class="border border-gray-400 p-3 font-semibold bg-gray-50">Class management & wellbeing</td>
                         <td class="border border-gray-400 p-3">Behavior for Learning and wellbeing activities are clearly reflected in the lesson.</td>
                         <td class="border border-gray-400 p-3">
@@ -409,7 +409,7 @@
                 image:        { type: 'jpeg', quality: 0.98 },
                 html2canvas:  { scale: 2, useCORS: true, logging: false },
                 jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' },
-                pagebreak:    { mode: 'css', after: '.page-break-row', avoid: 'tr' }
+                pagebreak:    { mode: 'css', avoid: 'tr' }
             };
 
             // Workaround to ensure input values are painted to canvas correctly by converting values to standard text nodes or attributes temporarily if needed. 
