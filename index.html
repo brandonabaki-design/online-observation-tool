@@ -412,22 +412,22 @@
                 pagebreak:    { mode: 'css', after: '.page-break-row', avoid: 'tr' }
             };
 
-            // Fix for inputs
+            // Workaround to ensure input values are painted to canvas correctly by converting values to standard text nodes or attributes temporarily if needed. 
+            // modern html2pdf handles standard text inputs reasonably well, but forcing values to attributes helps.
             const inputs = element.querySelectorAll('input[type="text"], input[type="date"], input[type="time"]');
             inputs.forEach(input => {
                 input.setAttribute('value', input.value);
             });
             
-            // CRITICAL FIX: html2canvas (used by html2pdf) often fails to wrap text inside textareas, causing horizontal cutoff.
-            // We temporarily replace textareas with standard styled <div> elements right before generating the PDF.
+            // CRITICAL FIX: Replace textareas with divs temporarily for PDF generation to ensure text wraps properly
             const textareas = element.querySelectorAll('textarea');
             const replacements = [];
 
             textareas.forEach(ta => {
                 const div = document.createElement('div');
-                div.className = ta.className; // Copy Tailwind classes
+                div.className = ta.className; // Copy styling classes
                 
-                // Force wrap styles and maintain height
+                // Force wrap styles and maintain height so the box doesn't shrink
                 div.style.whiteSpace = 'pre-wrap';
                 div.style.wordBreak = 'break-word';
                 div.style.overflowWrap = 'break-word';
@@ -444,11 +444,11 @@
                 replacements.push({ textarea: ta, div: div, originalDisplay: originalDisplay });
             });
 
-            // Generate the PDF, then immediately restore the original textareas
+            // Generate the PDF, then instantly restore the textareas
             html2pdf().set(opt).from(element).save().then(() => {
                 replacements.forEach(item => {
                     item.textarea.style.display = item.originalDisplay; // Unhide textarea
-                    item.div.parentNode.removeChild(item.div); // Remove temp div
+                    item.div.parentNode.removeChild(item.div); // Remove the temporary div
                 });
             });
         }
