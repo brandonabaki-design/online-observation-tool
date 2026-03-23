@@ -21,6 +21,8 @@
             resize: none;
             overflow: hidden;
             min-height: 50px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
         }
 
         /* Input styling to look good on PDF */
@@ -410,20 +412,45 @@
                 pagebreak:    { mode: 'css', after: '.page-break-row', avoid: 'tr' }
             };
 
-            // Workaround to ensure input values are painted to canvas correctly by converting values to standard text nodes or attributes temporarily if needed. 
-            // modern html2pdf handles standard text inputs reasonably well, but forcing values to attributes helps.
+            // Fix for inputs
             const inputs = element.querySelectorAll('input[type="text"], input[type="date"], input[type="time"]');
             inputs.forEach(input => {
                 input.setAttribute('value', input.value);
             });
             
+            // CRITICAL FIX: html2canvas (used by html2pdf) often fails to wrap text inside textareas, causing horizontal cutoff.
+            // We temporarily replace textareas with standard styled <div> elements right before generating the PDF.
             const textareas = element.querySelectorAll('textarea');
+            const replacements = [];
+
             textareas.forEach(ta => {
-                ta.innerHTML = ta.value; 
+                const div = document.createElement('div');
+                div.className = ta.className; // Copy Tailwind classes
+                
+                // Force wrap styles and maintain height
+                div.style.whiteSpace = 'pre-wrap';
+                div.style.wordBreak = 'break-word';
+                div.style.overflowWrap = 'break-word';
+                div.style.minHeight = ta.style.height || Math.max(ta.offsetHeight, 50) + 'px';
+                
+                // Copy the text content exactly as typed
+                div.innerText = ta.value;
+
+                // Replace in DOM momentarily
+                ta.parentNode.insertBefore(div, ta);
+                const originalDisplay = ta.style.display;
+                ta.style.display = 'none'; // Hide original
+                
+                replacements.push({ textarea: ta, div: div, originalDisplay: originalDisplay });
             });
 
-            // Generate the PDF
-            html2pdf().set(opt).from(element).save();
+            // Generate the PDF, then immediately restore the original textareas
+            html2pdf().set(opt).from(element).save().then(() => {
+                replacements.forEach(item => {
+                    item.textarea.style.display = item.originalDisplay; // Unhide textarea
+                    item.div.parentNode.removeChild(item.div); // Remove temp div
+                });
+            });
         }
     </script>
 </body>
